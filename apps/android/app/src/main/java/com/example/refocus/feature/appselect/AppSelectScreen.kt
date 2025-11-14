@@ -1,20 +1,21 @@
 package com.example.refocus.feature.appselect
 
 import android.app.Application
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material3.Button
-import androidx.compose.material3.Checkbox
-import androidx.compose.material3.Text
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.unit.dp
-import androidx.compose.foundation.Image
-import androidx.compose.runtime.remember
 import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.graphics.painter.BitmapPainter
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.input.TextFieldValue
+import androidx.compose.ui.unit.dp
 import androidx.core.graphics.drawable.toBitmap
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.refocus.data.datastore.TargetsDataStore
@@ -26,74 +27,127 @@ fun AppSelectScreen(
 ) {
     val context = LocalContext.current
     val app = context.applicationContext as Application
-    val pm = context.packageManager
 
-    // M1では簡易的にここで ViewModel を作ってしまう
     val viewModel: AppListViewModel = viewModel(
-        factory = AppListViewModelFactory(
-            pm = pm,
-            repository = TargetsRepository(TargetsDataStore(app))
-        )
+        factory = AppListViewModelFactory(app)
     )
 
     val apps by viewModel.apps.collectAsState()
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(16.dp)
-    ) {
-        Text("対象アプリを選択")
+    var query by remember { mutableStateOf(TextFieldValue("")) }
 
-        Spacer(modifier = Modifier.height(8.dp))
+    val filtered = remember(apps, query) {
+        val q = query.text.trim()
+        if (q.isEmpty()) apps
+        else apps.filter { it.label.contains(q, ignoreCase = true) }
+    }
 
-        LazyColumn(
-            modifier = Modifier.weight(1f)
+    Scaffold(
+        bottomBar = {
+            Button(
+                onClick = { viewModel.save(onFinished) },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp)
+            ) {
+                Text("完了")
+            }
+        }
+    ) { padding ->
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(padding)
+                .padding(horizontal = 16.dp)
         ) {
-            items(apps) { app ->
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clickable { viewModel.toggleSelection(app.packageName) }
-                        .padding(vertical = 8.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ) {
-                    Row(
-                        modifier = Modifier.weight(1f)
-                    ) {
-                        val iconBitmap = remember(app.icon) {
-                            // サイズはお好み。40dp相当くらいでOK
-                            app.icon.toBitmap(64, 64)
-                        }
+            OutlinedTextField(
+                value = query,
+                onValueChange = { query = it },
+                label = { Text("アプリを検索") },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 8.dp),
+                shape = RoundedCornerShape(16.dp)
+            )
 
-                        Image(
-                            bitmap = iconBitmap.asImageBitmap(),
-                            contentDescription = app.label,
-                            modifier = Modifier
-                                .size(40.dp)
-                                .padding(end = 8.dp)
-                        )
-                        Text(
-                            text = app.label,
-                            modifier = Modifier.alignByBaseline()
-                        )
-                    }
-
-                    Checkbox(
-                        checked = app.isSelected,
-                        onCheckedChange = {
-                            viewModel.toggleSelection(app.packageName)
-                        }
+            LazyColumn(
+                modifier = Modifier.weight(1f)
+            ) {
+                items(filtered) { appItem ->
+                    AppRow(
+                        app = appItem,
+                        onClick = { viewModel.toggleSelection(appItem.packageName) }
                     )
                 }
             }
         }
+    }
+}
 
-        Button(
-            onClick = { viewModel.save(onFinished) },
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Text("保存して完了")
+@Composable
+private fun AppRow(
+    app: AppListViewModel.AppUiModel,
+    onClick: () -> Unit
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable { onClick() }
+            .padding(vertical = 8.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        // Drawable → Painter 変換（パッケージ名ごとに remember）
+        val iconPainter = remember(app.packageName) {
+            app.icon?.let { drawable ->
+                // サイズは Drawable 側に任せつつ、そのままBitmap化
+                val bitmap = drawable.toBitmap()
+                BitmapPainter(bitmap.asImageBitmap())
+            }
         }
+
+        if (iconPainter != null) {
+            Image(
+                painter = iconPainter,
+                contentDescription = app.label,
+                modifier = Modifier.size(40.dp)
+            )
+        } else {
+            // フォールバック：アイコンが取れなかった場合は枠だけ or 先頭文字など
+            Box(
+                modifier = Modifier
+                    .size(40.dp)
+            ) {
+                // 余裕があれば Text(app.label.firstOrNull()?.toString() ?: "") などでもOK
+            }
+        }
+
+        Column(
+            modifier = Modifier
+                .weight(1f)
+                .padding(start = 12.dp)
+        ) {
+            Text(app.label)
+            Text(formatUsage(app.usageTimeMs), style = MaterialTheme.typography.bodySmall)
+        }
+
+        Checkbox(
+            checked = app.isSelected,
+            onCheckedChange = { onClick() }
+        )
+    }
+}
+
+private fun formatUsage(ms: Long): String {
+    if (ms <= 0L) return "過去7日間 0分"
+
+    val totalSeconds = ms / 1000
+    val minutes = totalSeconds / 60
+    val hours = minutes / 60
+    val remMinutes = minutes % 60
+
+    return if (hours > 0) {
+        "過去7日間 ${hours}時間${remMinutes}分"
+    } else {
+        "過去7日間 ${minutes}分"
     }
 }

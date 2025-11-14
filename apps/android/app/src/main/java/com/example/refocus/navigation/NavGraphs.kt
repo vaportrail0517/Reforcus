@@ -5,29 +5,54 @@ import androidx.compose.runtime.Composable
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import com.example.refocus.feature.onboarding.OnboardingScreen
+import com.example.refocus.feature.onboarding.OnboardingIntroScreen
+import com.example.refocus.feature.onboarding.PermissionFlowScreen
+import com.example.refocus.feature.onboarding.OnboardingReadyScreen
+import com.example.refocus.feature.onboarding.OnboardingFinishScreen
 import com.example.refocus.feature.appselect.AppSelectScreen
 
 object Destinations {
-    const val ONBOARDING = "onboarding"
-    const val APP_SELECT = "app_select"
-    const val DONE = "done"
+    const val ONBOARDING_INTRO  = "onboarding_intro"
+    const val PERMISSION_FLOW   = "permission_flow"
+    const val ONBOARDING_READY  = "onboarding_ready"
+    const val APP_SELECT        = "app_select"
+    const val ONBOARDING_FINISH = "onboarding_finish"
+    // 将来: const val HOME = "home" など
+    const val HOME = "home"
 }
 
 @Composable
-fun RefocusNavHost() {
+fun RefocusNavHost(
+    // 将来: onExitApp や onOpenHome など渡したくなったらここに引数追加
+) {
     val navController = rememberNavController()
 
     NavHost(
         navController = navController,
-        startDestination = Destinations.ONBOARDING
+        startDestination = Destinations.ONBOARDING_INTRO
     ) {
-        composable(Destinations.ONBOARDING) {
-            OnboardingScreen(
-                onAllPermissionsGranted = {
-                    navController.navigate(Destinations.APP_SELECT) {
-                        popUpTo(Destinations.ONBOARDING) { inclusive = true }
+        composable(Destinations.ONBOARDING_INTRO) {
+            OnboardingIntroScreen(
+                onStartSetup = {
+                    navController.navigate(Destinations.PERMISSION_FLOW)
+                }
+            )
+        }
+
+        composable(Destinations.PERMISSION_FLOW) {
+            PermissionFlowScreen(
+                onFlowFinished = {
+                    navController.navigate(Destinations.ONBOARDING_READY) {
+                        popUpTo(Destinations.ONBOARDING_INTRO) { inclusive = true }
                     }
+                }
+            )
+        }
+
+        composable(Destinations.ONBOARDING_READY) {
+            OnboardingReadyScreen(
+                onSelectApps = {
+                    navController.navigate(Destinations.APP_SELECT)
                 }
             )
         }
@@ -35,15 +60,30 @@ fun RefocusNavHost() {
         composable(Destinations.APP_SELECT) {
             AppSelectScreen(
                 onFinished = {
-                    // 後で「ホーム画面」などへ遷移させる場所
-                    navController.navigate(Destinations.DONE) {
+                    navController.navigate(Destinations.ONBOARDING_FINISH) {
+                        popUpTo(Destinations.ONBOARDING_READY) { inclusive = false }
+                    }
+                }
+            )
+        }
+
+        composable(Destinations.ONBOARDING_FINISH) {
+            OnboardingFinishScreen(
+                onCloseApp = {
+                    // NavGraph 上から Activity を直接閉じるのは色々方法があるので、
+                    // とりあえず onCloseApp は MainActivity 側から渡す形にしておいてもよい
+                },
+                onOpenApp = {
+                    // TODO: 将来 HOME 画面をここで開く
+                    navController.navigate(Destinations.HOME) {
                         popUpTo(Destinations.APP_SELECT) { inclusive = true }
                     }
                 }
             )
         }
-        composable(Destinations.DONE) {
-            Text("セットアップ完了（この画面は仮です）")
+        composable(Destinations.HOME) {
+            Text("ホーム（仮）")
         }
     }
 }
+
