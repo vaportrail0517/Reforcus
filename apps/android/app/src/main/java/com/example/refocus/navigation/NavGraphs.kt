@@ -1,17 +1,22 @@
 package com.example.refocus.navigation
 
+import android.app.Activity
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.platform.LocalContext
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import com.example.refocus.feature.onboarding.EntryScreen
 import com.example.refocus.feature.onboarding.OnboardingIntroScreen
 import com.example.refocus.feature.onboarding.PermissionFlowScreen
 import com.example.refocus.feature.onboarding.OnboardingReadyScreen
 import com.example.refocus.feature.onboarding.OnboardingFinishScreen
 import com.example.refocus.feature.appselect.AppSelectScreen
+import com.example.refocus.feature.home.HomeScreen
 
 object Destinations {
+    const val ENTRY            = "entry"
     const val ONBOARDING_INTRO  = "onboarding_intro"
     const val PERMISSION_FLOW   = "permission_flow"
     const val ONBOARDING_READY  = "onboarding_ready"
@@ -29,8 +34,22 @@ fun RefocusNavHost(
 
     NavHost(
         navController = navController,
-        startDestination = Destinations.ONBOARDING_INTRO
+        startDestination = Destinations.ENTRY
     ) {
+        composable(Destinations.ENTRY) {
+            EntryScreen(
+                onNeedOnboarding = {
+                    navController.navigate(Destinations.ONBOARDING_INTRO) {
+                        popUpTo(Destinations.ENTRY) { inclusive = true }
+                    }
+                },
+                onAllReady = {
+                    navController.navigate(Destinations.HOME) {
+                        popUpTo(Destinations.ENTRY) { inclusive = true }
+                    }
+                }
+            )
+        }
         composable(Destinations.ONBOARDING_INTRO) {
             OnboardingIntroScreen(
                 onStartSetup = {
@@ -68,13 +87,14 @@ fun RefocusNavHost(
         }
 
         composable(Destinations.ONBOARDING_FINISH) {
+            val context = LocalContext.current
+            val activity = context as? Activity
             OnboardingFinishScreen(
                 onCloseApp = {
-                    // NavGraph 上から Activity を直接閉じるのは色々方法があるので、
-                    // とりあえず onCloseApp は MainActivity 側から渡す形にしておいてもよい
+                    // 仮
+                    activity?.finishAffinity()
                 },
                 onOpenApp = {
-                    // TODO: 将来 HOME 画面をここで開く
                     navController.navigate(Destinations.HOME) {
                         popUpTo(Destinations.APP_SELECT) { inclusive = true }
                     }
@@ -82,7 +102,7 @@ fun RefocusNavHost(
             )
         }
         composable(Destinations.HOME) {
-            Text("ホーム（仮）")
+            HomeScreen()
         }
     }
 }
