@@ -10,11 +10,8 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.example.refocus.permissions.PermissionHelper
-import androidx.compose.foundation.layout.*
-import androidx.compose.material3.Button
 import androidx.compose.material3.Text
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.dp
+import com.example.refocus.ui.components.OnboardingPage
 
 enum class PermissionType {
     UsageAccess,
@@ -194,145 +191,80 @@ fun PermissionFlowScreen(
     }
 }
 
-/* ---------- 各権限ごとのページ（ここを自由にデザインできる） ---------- */
+/* ---------- 各権限ごとの画面 ---------- */
 
 @Composable
 private fun UsageAccessIntroPage(
     onNext: () -> Unit
 ) {
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .systemBarsPadding()
-            .padding(24.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
-    ) {
-        Text("使用状況へのアクセス")
-        Text("どのアプリをどれだけ連続して使っているかを計測するために必要です。")
-
-        // TODO: ここに画像や図解などを自由に追加してOK
-        // Image(painterResource(id = R.drawable.usage_intro), contentDescription = null)
-
-        Spacer(modifier = Modifier.weight(1f))
-
-        Button(
-            onClick = onNext,
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Text("続行")
-        }
-    }
+    OnboardingPage(
+        title = "使用状況へのアクセス",
+        description = "どのアプリをどれだけ連続して使っているかを計測するために必要な権限です。",
+        primaryButtonText = "次へ",
+        onPrimaryClick = onNext,
+        content = {}
+    )
 }
 
 @Composable
 private fun UsageAccessExplainPage(
     onRequestPermission: () -> Unit
 ) {
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .systemBarsPadding()
-            .padding(24.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
-    ) {
-        Text("使用状況へのアクセスを有効にしましょう")
-
-        // TODO: 実際の設定画面のスクリーンショットなどをここに追加可能
-        Text("1. 「許可」を押すと設定アプリが開きます。")
-        Text("2. アプリ一覧から「Refocus」を探してタップします。")
-        Text("3. 「使用状況へのアクセス」をオンにします。")
-
-        Spacer(modifier = Modifier.weight(1f))
-
-        Button(
-            onClick = onRequestPermission,
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Text("許可")
+    OnboardingPage(
+        title = "使用状況へのアクセスを有効にしましょう",
+        description = null,
+        primaryButtonText = "設定を開く",
+        onPrimaryClick = onRequestPermission,
+        content = {
+            Text("1. 「設定を開く」を押すと設定アプリが開きます。")
+            Text("2. アプリ一覧から「Refocus」を選びます。")
+            Text("3. 「使用状況へのアクセス」をオンにします。")
         }
-    }
+    )
 }
 
 @Composable
 private fun OverlayIntroPage(
     onNext: () -> Unit
 ) {
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .systemBarsPadding()
-            .padding(24.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
-    ) {
-        Text("他のアプリの上に重ねて表示")
-        Text("タイマーを他のアプリの上に小さく表示するために必要です。")
-
-        // TODO: ここにもオーバーレイのイメージ図などを追加できる
-
-        Spacer(modifier = Modifier.weight(1f))
-
-        Button(
-            onClick = onNext,
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Text("続行")
-        }
-    }
+    OnboardingPage(
+        title = "他のアプリの上に重ねて表示",
+        description = "タイマーを他のアプリの上に表示するために必要です。",
+        primaryButtonText = "次へ",
+        onPrimaryClick = onNext,
+        content = {}
+    )
 }
+
 
 @Composable
 private fun OverlayExplainPage(
     onRequestPermission: () -> Unit
 ) {
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .systemBarsPadding()
-            .padding(24.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
-    ) {
-        Text("他のアプリの上に表示を許可しましょう")
-
-        Text("1. 「許可」を押すと設定アプリが開きます。")
-        Text("2. 一覧から「Refocus」を選びます。")
-        Text("3. 「他のアプリの上に表示」をオンにします。")
-
-        Spacer(modifier = Modifier.weight(1f))
-
-        Button(
-            onClick = onRequestPermission,
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Text("許可")
+    OnboardingPage(
+        title = "他のアプリの上に表示を許可しましょう",
+        description = null,
+        primaryButtonText = "設定を開く",
+        onPrimaryClick = onRequestPermission,
+        content = {
+            Text("1. 「設定を開く」を押すと設定アプリが開きます。")
+            Text("2. アプリ一覧から「Refocus」を選びます。")
+            Text("3. 「他のアプリの上に表示」をオンにします。")
         }
-    }
+    )
 }
 
 @Composable
 private fun NotificationPermissionPage(
     onRequestPermission: () -> Unit
 ) {
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .systemBarsPadding()
-            .padding(24.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
-    ) {
-        Text("通知")
-        Text("やることの提案などを行うために通知を使います。")
-
-        // TODO: 通知の例（モック画面）などを画像で入れてもOK
-
-        Spacer(modifier = Modifier.weight(1f))
-
-        Button(
-            onClick = onRequestPermission,
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Text("許可")
-        }
-    }
+    OnboardingPage(
+        title = "通知",
+        description = "やりたいことの提案などを行うために通知を使います。",
+        primaryButtonText = "許可",
+        onPrimaryClick = onRequestPermission,
+        content = {}
+    )
 }
 
 /* ---------- ヘルパー ---------- */
@@ -360,6 +292,6 @@ private fun moveToNextStep(
         setIndex(currentIndex + 1)
         setPage(PermissionPage.IntroOrSingle)
     } else {
-        setIndex(stepsSize) // → LaunchedEffect から onFlowFinished が呼ばれる
+        setIndex(stepsSize)
     }
 }
