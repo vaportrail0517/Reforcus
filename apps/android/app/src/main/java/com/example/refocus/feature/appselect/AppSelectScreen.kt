@@ -13,6 +13,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.painter.BitmapPainter
+import androidx.compose.ui.modifier.modifierLocalConsumer
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
@@ -44,19 +45,26 @@ fun AppSelectScreen(
 
     Scaffold(
         bottomBar = {
-            Button(
-                onClick = { viewModel.save(onFinished) },
+            Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(16.dp)
+                    .navigationBarsPadding()
+                    .padding(horizontal = 16.dp, vertical = 8.dp)
             ) {
-                Text("完了")
+                Button(
+                    onClick = { viewModel.save(onFinished) },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                ) {
+                    Text("完了")
+                }
             }
         }
     ) { padding ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
+
                 .padding(padding)
                 .padding(horizontal = 16.dp)
         ) {

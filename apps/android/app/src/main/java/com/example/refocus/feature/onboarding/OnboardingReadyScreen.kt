@@ -13,7 +13,9 @@ fun OnboardingReadyScreen(
     onSelectApps: () -> Unit
 ) {
     Box(
-        modifier = Modifier.fillMaxSize()
+        modifier = Modifier
+            .fillMaxSize()
+            .systemBarsPadding()
     ) {
         Column(
             modifier = Modifier
