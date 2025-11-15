@@ -6,28 +6,18 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.KeyboardActions
-import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.painter.BitmapPainter
-import androidx.compose.ui.modifier.modifierLocalConsumer
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalFocusManager
-import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
 import androidx.core.graphics.drawable.toBitmap
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.example.refocus.data.datastore.TargetsDataStore
-import com.example.refocus.data.repository.TargetsRepository
+import com.example.refocus.ui.components.RefocusSearchBar
 
 @Composable
 fun AppSelectScreen(
@@ -74,49 +64,13 @@ fun AppSelectScreen(
                 .padding(padding)
                 .padding(horizontal = 16.dp)
         ) {
-            val focusManager = LocalFocusManager.current
-            OutlinedTextField(
+            RefocusSearchBar(
                 value = query,
                 onValueChange = { query = it },
-                label = { Text("検索") },
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(vertical = 8.dp),
-                shape = RoundedCornerShape(32.dp),
-                colors = OutlinedTextFieldDefaults.colors(
-                    focusedContainerColor = MaterialTheme.colorScheme.surfaceVariant,
-                    unfocusedContainerColor = MaterialTheme.colorScheme.surfaceVariant,
-                    disabledContainerColor = MaterialTheme.colorScheme.surfaceVariant
-                ),
-                leadingIcon = {
-                    Icon(
-                        imageVector = Icons.Filled.Search,
-                        contentDescription = "検索"
-                    )
-                },
-                trailingIcon = {
-                    if (query.text.isNotEmpty()) {
-                        IconButton(
-                            onClick = {
-                                query = TextFieldValue("")
-                            }
-                        ) {
-                            Icon(
-                                imageVector = Icons.Filled.Close,
-                                contentDescription = "クリア"
-                            )
-                        }
-                    }
-                },
-                singleLine = true,
-                keyboardOptions = KeyboardOptions(
-                    imeAction = ImeAction.Search
-                ),
-                keyboardActions = KeyboardActions(
-                    onSearch = {
-                        focusManager.clearFocus()
-                    }
-                )
+                label = "検索"
             )
 
             LazyColumn(

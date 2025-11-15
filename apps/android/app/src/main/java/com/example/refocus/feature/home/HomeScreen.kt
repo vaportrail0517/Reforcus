@@ -3,9 +3,7 @@ package com.example.refocus.feature.home
 import android.app.Activity
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material.icons.filled.Insights
 import androidx.compose.material.icons.filled.Lightbulb
 import androidx.compose.material.icons.filled.Settings
@@ -20,6 +18,9 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.example.refocus.permissions.PermissionHelper
+import com.example.refocus.ui.components.SectionTitle
+import com.example.refocus.ui.components.SectionCard
+import com.example.refocus.ui.components.SettingRow
 
 enum class HomeTab {
     Suggestions,
@@ -135,69 +136,41 @@ private fun SettingsTab(
             .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
-        Text(
-            text = "権限",
-            style = MaterialTheme.typography.titleMedium,
-            fontWeight = FontWeight.Bold,
-            modifier = Modifier.padding(start=16.dp, top=16.dp, end=16.dp, bottom=0.dp)
-        )
-        Surface(
-            modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(16.dp),
-            color = MaterialTheme.colorScheme.surfaceVariant,
-            tonalElevation = 1.dp
-        ) {
-            Column(
-                modifier = Modifier.fillMaxWidth().padding(16.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                PermissionRow(
-                    title = "使用状況へのアクセス",
-                    description = "連続使用時間を計測するために必要です。",
-                    isGranted = usageGranted,
-                    onClick = {
-                        activity?.let { PermissionHelper.openUsageAccessSettings(it) }
-                    }
-                )
-                PermissionRow(
-                    title = "他のアプリの上に表示",
-                    description = "タイマーを他のアプリの上に表示するために必要です。",
-                    isGranted = overlayGranted,
-                    onClick = {
-                        activity?.let { PermissionHelper.openOverlaySettings(it) }
-                    }
-                )
-                PermissionRow(
-                    title = "通知",
-                    description = "やることの提案やお知らせに利用します。",
-                    isGranted = notificationGranted,
-                    onClick = {
-                        activity?.let { PermissionHelper.openNotificationSettings(it) }
-                    }
-                )
-            }
+        SectionTitle("権限")
+        SectionCard {
+            PermissionRow(
+                title = "使用状況へのアクセス",
+                description = "連続使用時間を計測するために必要です。",
+                isGranted = usageGranted,
+                onClick = {
+                    activity?.let { PermissionHelper.openUsageAccessSettings(it) }
+                }
+            )
+            PermissionRow(
+                title = "他のアプリの上に表示",
+                description = "タイマーを他のアプリの上に表示するために必要です。",
+                isGranted = overlayGranted,
+                onClick = {
+                    activity?.let { PermissionHelper.openOverlaySettings(it) }
+                }
+            )
+            PermissionRow(
+                title = "通知",
+                description = "やることの提案やお知らせに利用します。",
+                isGranted = notificationGranted,
+                onClick = {
+                    activity?.let { PermissionHelper.openNotificationSettings(it) }
+                }
+            )
         }
 
-        Text(
-            text = "対象アプリ",
-            style = MaterialTheme.typography.titleMedium,
-            fontWeight = FontWeight.Bold,
-            modifier = Modifier.padding(start=16.dp, top=16.dp, end=16.dp, bottom=0.dp)
-        )
-        Surface(
-            modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(16.dp),
-            color = MaterialTheme.colorScheme.surfaceVariant,   // 背景を少し変える
-            tonalElevation = 1.dp
-        ) {
-            Column(
-                modifier = Modifier.fillMaxWidth().padding(16.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                TargetAppsRow(
-                    onClick = onOpenAppSelect
-                )
-            }
+        SectionTitle("対象アプリ")
+        SectionCard {
+            SettingRow(
+                title = "対象アプリを設定",
+                subtitle = "時間を計測したいアプリを選択します。",
+                onClick = onOpenAppSelect
+            )
         }
     }
 }
@@ -234,46 +207,7 @@ private fun PermissionRow(
         Switch(
             checked = isGranted,
             onCheckedChange = null,
-            enabled = false,
-            colors = SwitchDefaults.colors(
-                disabledCheckedThumbColor = MaterialTheme.colorScheme.primary,
-                disabledCheckedTrackColor = MaterialTheme.colorScheme.primaryContainer,
-                disabledUncheckedThumbColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                disabledUncheckedTrackColor = MaterialTheme.colorScheme.surfaceVariant
-            )
-        )
-    }
-}
-
-@Composable
-private fun TargetAppsRow(
-    onClick: () -> Unit
-) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable { onClick() }
-            .padding(vertical = 8.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Column(
-            modifier = Modifier.weight(1f)
-        ) {
-            Text(
-                text = "対象アプリを設定",
-                style = MaterialTheme.typography.bodyLarge,
-                fontWeight = FontWeight.SemiBold
-            )
-            Spacer(modifier = Modifier.height(4.dp))
-            Text(
-                text = "時間を計測したいアプリを選択します。",
-                style = MaterialTheme.typography.bodySmall
-            )
-        }
-        Spacer(modifier = Modifier.width(8.dp))
-        Icon(
-            imageVector = Icons.Filled.ChevronRight,
-            contentDescription = null
+            enabled = true,
         )
     }
 }
