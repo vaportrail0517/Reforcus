@@ -1,6 +1,7 @@
 package com.example.refocus.feature.onboarding
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.platform.LocalContext
 import com.example.refocus.feature.overlay.startOverlayService
 import com.example.refocus.ui.components.OnboardingPage
@@ -35,8 +36,11 @@ fun OnboardingFinishScreen(
     onOpenApp: () -> Unit
 ) {
     val context = LocalContext.current
-    OnboardingState.setCompleted(context, true)
-    context.startOverlayService()
+
+    LaunchedEffect(Unit) {
+        OnboardingState.setCompleted(context, true)
+        context.startOverlayService()
+    }
 
     OnboardingPage(
         title = "設定が完了しました",

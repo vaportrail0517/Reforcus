@@ -2,8 +2,10 @@ package com.example.refocus.data
 
 import android.app.Application
 import com.example.refocus.data.datastore.TargetsDataStore
+import com.example.refocus.data.db.RefocusDatabase
+import com.example.refocus.data.repository.SessionRepository
+import com.example.refocus.data.repository.SessionRepositoryImpl
 import com.example.refocus.data.repository.TargetsRepository
-
 /**
  * Application から Repository を組み立てるヘルパー。
  * 将来 SessionRepository / SettingsRepository もここに集約する。
@@ -16,8 +18,10 @@ class RepositoryProvider(
         val dataStore = TargetsDataStore(application)
         TargetsRepository(dataStore)
     }
-
-    // M3 で追加予定:
-    // val sessionRepository: SessionRepository by lazy { ... }
+    val sessionRepository: SessionRepository by lazy {
+        val db = RefocusDatabase.getInstance(application)
+        val sessionDao = db.sessionDao()
+        SessionRepositoryImpl(sessionDao)
+    }
     // val settingsRepository: SettingsRepository by lazy { ... }
 }
