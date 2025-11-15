@@ -23,7 +23,7 @@ fun OnboardingIntroScreen(
                 .padding(24.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            Text("Refocusでアプリ使用時間をリアルタイムで可視化しよう！")
+            Text("Refocusでアプリ使用時間をリアルタイムに可視化しよう！")
 
             Text("Refocusを動作させるために、いくつか権限を設定する必要があります。")
 

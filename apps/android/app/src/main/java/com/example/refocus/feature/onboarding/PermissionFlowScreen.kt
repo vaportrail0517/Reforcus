@@ -320,7 +320,7 @@ private fun NotificationPermissionPage(
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
         Text("通知")
-        Text("休憩の提案などを行うために通知を使います。")
+        Text("やることの提案などを行うために通知を使います。")
 
         // TODO: 通知の例（モック画面）などを画像で入れてもOK
 

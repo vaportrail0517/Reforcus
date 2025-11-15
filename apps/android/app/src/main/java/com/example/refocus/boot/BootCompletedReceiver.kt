@@ -14,10 +14,6 @@ class BootCompletedReceiver : BroadcastReceiver() {
         // 一旦サービスを起動して OverlayService 側にチェックさせる。
         Log.d("BootCompletedReceiver", "BOOT_COMPLETED → start OverlayService")
         val serviceIntent = Intent(context, OverlayService::class.java)
-        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
-            context.startForegroundService(serviceIntent)
-        } else {
-            context.startService(serviceIntent)
-        }
+        context.startForegroundService(serviceIntent)
     }
 }

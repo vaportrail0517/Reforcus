@@ -6,13 +6,19 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import com.example.refocus.feature.overlay.startOverlayService
 
 @Composable
 fun OnboardingFinishScreen(
     onCloseApp: () -> Unit,
     onOpenApp: () -> Unit
 ) {
+    val context = LocalContext.current
+    OnboardingState.setCompleted(context, true)
+    context.startOverlayService()
+
     Box(
         modifier = Modifier
             .fillMaxSize()

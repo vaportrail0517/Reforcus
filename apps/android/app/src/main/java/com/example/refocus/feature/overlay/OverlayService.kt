@@ -1,11 +1,11 @@
 package com.example.refocus.feature.overlay
 
+import android.annotation.SuppressLint
 import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.content.Context
 import android.content.Intent
-import android.os.Build
 import android.os.IBinder
 import android.os.SystemClock
 import android.util.Log
@@ -80,29 +80,29 @@ class OverlayService : LifecycleService() {
     }
 
     override fun onBind(intent: Intent): IBinder? {
+        super.onBind(intent)
         // バインドは使わない
         return null
     }
 
+    @SuppressLint("ForegroundServiceType")
     private fun startForegroundWithNotification() {
         val nm = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val channel = NotificationChannel(
-                NOTIFICATION_CHANNEL_ID,
-                "Refocus timer",
-                NotificationManager.IMPORTANCE_MIN
-            ).apply {
-                description = "Refocus timer overlay service"
-            }
-            nm.createNotificationChannel(channel)
+        val channel = NotificationChannel(
+            NOTIFICATION_CHANNEL_ID,
+            "Refocus timer",
+            NotificationManager.IMPORTANCE_MIN
+        ).apply {
+            description = "Refocus timer overlay service"
         }
+        nm.createNotificationChannel(channel)
 
         // アイコンはとりあえずアプリアイコンを流用
         val notification: Notification =
             NotificationCompat.Builder(this, NOTIFICATION_CHANNEL_ID)
-                .setContentTitle("Refocus が使用状況を監視中")
-                .setContentText("対象アプリ利用時にタイマーを表示します")
+                .setContentTitle("Refocus が動作しています")
+                .setContentText("対象アプリ利用時に経過時間を可視化します")
                 .setSmallIcon(R.mipmap.ic_launcher)
                 .setOngoing(true)
                 .build()

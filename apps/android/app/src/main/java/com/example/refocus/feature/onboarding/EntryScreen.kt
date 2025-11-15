@@ -12,28 +12,32 @@ import com.example.refocus.permissions.PermissionHelper
 
 @Composable
 fun EntryScreen(
-    onNeedOnboarding: () -> Unit,
+    onNeedFullOnboarding: () -> Unit,
+    onNeedPermissionFix: () -> Unit,
     onAllReady: () -> Unit
 ) {
     val context = LocalContext.current
     val activity = context as? Activity
 
-    // 起動直後に一度だけ権限をチェック
     LaunchedEffect(Unit) {
         val hasUsage = PermissionHelper.hasUsageAccess(context)
         val hasOverlay = PermissionHelper.hasOverlayPermission(context)
         val hasNotif = PermissionHelper.hasNotificationPermission(context)
+        val allGranted = hasUsage && hasOverlay && hasNotif
 
-        if (hasUsage && hasOverlay && hasNotif) {
-            // すでに全部OK → ホームへ
-            onAllReady()
+        val completed = OnboardingState.isCompleted(context)
+
+        if (!completed) {
+            onNeedFullOnboarding()
         } else {
-            // 足りない権限がある → オンボーディングへ
-            onNeedOnboarding()
+            if (allGranted) {
+                onAllReady()
+            } else {
+                onNeedPermissionFix()
+            }
         }
     }
 
-    // ほんの一瞬だけ出る読み込みUI（気になるならロゴなどに差し替え可）
     Box(
         modifier = Modifier.fillMaxSize(),
         contentAlignment = Alignment.Center

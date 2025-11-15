@@ -4,12 +4,12 @@ import android.app.Activity
 import android.app.AppOpsManager
 import android.content.Context
 import android.content.Intent
-import android.net.Uri
 import android.os.Build
 import android.os.Process
 import android.provider.Settings
 import androidx.core.content.ContextCompat
 import android.content.pm.PackageManager
+import androidx.core.net.toUri
 
 object PermissionHelper {
 
@@ -45,8 +45,16 @@ object PermissionHelper {
     fun openOverlaySettings(activity: Activity) {
         val intent = Intent(
             Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
-            Uri.parse("package:${activity.packageName}")
+            "package:${activity.packageName}".toUri()
         )
+        activity.startActivity(intent)
+    }
+
+    fun openNotificationSettings(activity: Activity) {
+        val intent =
+            Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS).apply {
+                putExtra(Settings.EXTRA_APP_PACKAGE, activity.packageName)
+            }
         activity.startActivity(intent)
     }
 }
