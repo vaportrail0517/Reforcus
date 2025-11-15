@@ -1,0 +1,160 @@
+package com.example.refocus.feature.overlay
+
+import android.content.Context
+import android.graphics.PixelFormat
+import android.os.Build
+import android.util.Log
+import android.view.Gravity
+import android.view.MotionEvent
+import android.view.View
+import android.view.WindowManager
+import androidx.compose.ui.platform.ComposeView
+import com.example.refocus.ui.theme.RefocusTheme
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleOwner
+import androidx.lifecycle.LifecycleRegistry
+import androidx.lifecycle.setViewTreeLifecycleOwner
+import androidx.savedstate.SavedStateRegistry
+import androidx.savedstate.SavedStateRegistryController
+import androidx.savedstate.SavedStateRegistryOwner
+import androidx.savedstate.setViewTreeSavedStateRegistryOwner
+
+/**
+ * Service など Activity 以外のコンテキストから、
+ * TYPE_APPLICATION_OVERLAY で Compose の View を表示するためのコントローラ。
+ */
+class OverlayController(
+    private val context: Context,
+    private val lifecycleOwner: LifecycleOwner,
+) {
+    private val windowManager =
+        context.getSystemService(Context.WINDOW_SERVICE) as WindowManager
+
+    private var overlayView: View? = null
+    private var layoutParams: WindowManager.LayoutParams? = null
+
+    /**
+     * Timer を表示する。既に表示中なら何もしない。
+     * baseElapsedRealtime は起動開始時刻（SystemClock.elapsedRealtime の値）
+     */
+    fun showTimer(initialElapsedMillis: Long) {
+        if (overlayView != null) {
+            Log.d("OverlayController", "showTimer: already showing")
+            return
+        }
+        Log.d("OverlayController", "showTimer: creating overlay view")
+
+        val params = WindowManager.LayoutParams(
+            WindowManager.LayoutParams.WRAP_CONTENT,
+            WindowManager.LayoutParams.WRAP_CONTENT,
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O)
+                WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY
+            else
+                WindowManager.LayoutParams.TYPE_PHONE,
+            WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or
+                    WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN,
+            PixelFormat.TRANSLUCENT
+        ).apply {
+            gravity = Gravity.TOP or Gravity.END
+            x = 24
+            y = 120
+        }
+
+        val composeView = ComposeView(context).apply {
+            // View ツリーの LifecycleOwner は Service(LifecycleService) を使う
+            setViewTreeLifecycleOwner(lifecycleOwner)
+
+            // SavedStateRegistryOwner はサービスとは独立したダミーのオーナーを使う
+            val savedStateOwner = OverlaySavedStateOwner()
+            setViewTreeSavedStateRegistryOwner(savedStateOwner)
+
+            setContent {
+                RefocusTheme {
+                    OverlayTimerBubble(initialElapsedMillis = initialElapsedMillis)
+                }
+            }
+
+            // 簡易ドラッグ移動
+            setOnTouchListener(object : View.OnTouchListener {
+                private var initialX = 0
+                private var initialY = 0
+                private var initialTouchX = 0f
+                private var initialTouchY = 0f
+
+                override fun onTouch(v: View, event: MotionEvent): Boolean {
+                    val lp = this@OverlayController.layoutParams ?: return false
+                    when (event.action) {
+                        MotionEvent.ACTION_DOWN -> {
+                            initialX = lp.x
+                            initialY = lp.y
+                            initialTouchX = event.rawX
+                            initialTouchY = event.rawY
+                            return true
+                        }
+                        MotionEvent.ACTION_MOVE -> {
+                            lp.x = initialX + (event.rawX - initialTouchX).toInt()
+                            lp.y = initialY + (event.rawY - initialTouchY).toInt()
+                            windowManager.updateViewLayout(v, lp)
+                            return true
+                        }
+                    }
+                    return false
+                }
+            })
+        }
+
+        overlayView = composeView
+        layoutParams = params
+        try {
+            windowManager.addView(composeView, params)
+            Log.d("OverlayController", "showTimer: addView success")
+        } catch (e: Exception) {
+            Log.e("OverlayController", "showTimer: addView failed", e)
+        }
+    }
+
+    /**
+     * Timer を非表示にする。
+     */
+    fun hideTimer() {
+        val view = overlayView ?: return
+        try {
+            windowManager.removeView(view)
+            Log.d("OverlayController", "hideTimer: removeView success")
+        } catch (e: Exception) {
+            Log.e("OverlayController", "hideTimer: removeView failed", e)
+        } finally {
+            overlayView = null
+            layoutParams = null
+        }
+    }
+}
+
+/**
+ * Service とは独立した Lifecycle を持つ、SavedStateRegistryOwner のダミー実装。
+ *
+ * - Compose 側は ViewTreeSavedStateRegistryOwner が存在することだけを要求する
+ * - 実際の状態保存/復元は行わない（Bundle は常に null）
+ */
+private class OverlaySavedStateOwner : SavedStateRegistryOwner {
+
+    // 自前の LifecycleRegistry を持つ
+    private val lifecycleRegistry = LifecycleRegistry(this)
+
+    // SavedStateRegistryController を自前の Lifecycle 上に構成
+    private val controller = SavedStateRegistryController.create(this)
+
+    override val lifecycle: Lifecycle
+        get() = lifecycleRegistry
+
+    override val savedStateRegistry: SavedStateRegistry
+        get() = controller.savedStateRegistry
+
+    init {
+        // INITIALIZED の状態で attach/restore を実行する
+        lifecycleRegistry.currentState = Lifecycle.State.INITIALIZED
+        controller.performRestore(null)
+        // 最低限 CREATED に遷移させておく（以降は特に進めなくても問題なし）
+        lifecycleRegistry.currentState = Lifecycle.State.CREATED
+    }
+}

@@ -1,6 +1,9 @@
 package com.example.refocus.navigation
 
 import android.app.Activity
+import android.content.Intent
+import android.os.Build
+import android.util.Log
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.platform.LocalContext
@@ -14,6 +17,8 @@ import com.example.refocus.feature.onboarding.OnboardingReadyScreen
 import com.example.refocus.feature.onboarding.OnboardingFinishScreen
 import com.example.refocus.feature.appselect.AppSelectScreen
 import com.example.refocus.feature.home.HomeScreen
+import com.example.refocus.feature.overlay.OverlayService
+import com.example.refocus.feature.overlay.startOverlayService
 
 object Destinations {
     const val ENTRY            = "entry"
@@ -31,6 +36,7 @@ fun RefocusNavHost(
     // 将来: onExitApp や onOpenHome など渡したくなったらここに引数追加
 ) {
     val navController = rememberNavController()
+    val context = LocalContext.current
 
     NavHost(
         navController = navController,
@@ -44,6 +50,8 @@ fun RefocusNavHost(
                     }
                 },
                 onAllReady = {
+                    Log.d("NavGraphs", "ENTRY onAllReady → startOverlayService")
+                    context.startOverlayService()
                     navController.navigate(Destinations.HOME) {
                         popUpTo(Destinations.ENTRY) { inclusive = true }
                     }
@@ -95,6 +103,8 @@ fun RefocusNavHost(
                     activity?.finishAffinity()
                 },
                 onOpenApp = {
+                    Log.d("NavGraphs", "ONBOARDING_FINISH onOpenApp → startOverlayService")
+                    context.startOverlayService()
                     navController.navigate(Destinations.HOME) {
                         popUpTo(Destinations.APP_SELECT) { inclusive = true }
                     }
