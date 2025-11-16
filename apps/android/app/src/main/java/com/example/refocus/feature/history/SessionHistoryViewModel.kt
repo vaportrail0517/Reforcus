@@ -1,0 +1,123 @@
+package com.example.refocus.feature.history
+
+import android.app.Application
+import android.content.pm.PackageManager
+import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.viewModelScope
+import com.example.refocus.core.model.Session
+import com.example.refocus.data.repository.SessionRepository
+import com.example.refocus.feature.monitor.ForegroundAppMonitor
+import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.launch
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
+import java.util.concurrent.TimeUnit
+
+
+class SessionHistoryViewModel(
+    application: Application,
+    private val sessionRepository: SessionRepository,
+    private val foregroundAppMonitor: ForegroundAppMonitor
+) : AndroidViewModel(application) {
+
+    enum class SessionStatus {
+        RUNNING,
+        GRACE,
+        FINISHED
+    }
+    data class SessionUiModel(
+        val id: Long?,
+        val appLabel: String,
+        val packageName: String,
+        val startedAtText: String,
+        val endedAtText: String,
+        val durationText: String,
+        val status: SessionStatus,
+    )
+
+    private val pm: PackageManager = application.packageManager
+
+    private val _sessions = MutableStateFlow<List<SessionUiModel>>(emptyList())
+    val sessions: StateFlow<List<SessionUiModel>> = _sessions.asStateFlow()
+
+    init {
+        observeSessions()
+    }
+
+    private fun observeSessions() {
+        viewModelScope.launch {
+            combine(
+                sessionRepository.observeAllSessions(),                          // DB上の全セッション
+                foregroundAppMonitor.foregroundAppFlow(pollingIntervalMs = 500L) // 現在の前面アプリ
+                    .catch { emit(null) }                                        // 取得失敗時は null
+                    .onStart { emit(null) }                                     // 初期値
+            ) { sessions, foregroundPackage ->
+                sessions to foregroundPackage
+            }.collect { (sessions, foregroundPackage) ->
+                _sessions.value = sessions.map { it.toUiModel(foregroundPackage) }
+            }
+        }
+    }
+
+    private fun Session.toUiModel(
+        foregroundPackage: String?
+    ): SessionUiModel {
+        val label = resolveAppLabel(packageName)
+        val startedText = formatDateTime(startedAtMillis)
+        val endedText = endedAtMillis?.let { formatDateTime(it) } ?: "未終了"
+
+        val durationText = formatDuration(startedAtMillis, endedAtMillis)
+
+        val status = when {
+            endedAtMillis != null -> SessionStatus.FINISHED
+            packageName == foregroundPackage -> SessionStatus.RUNNING   // 今まさにそのアプリが前面
+            else -> SessionStatus.GRACE                                  // DB上はactiveだが前面ではない＝猶予中
+        }
+
+        return SessionUiModel(
+            id = id,
+            appLabel = label,
+            packageName = packageName,
+            startedAtText = startedText,
+            endedAtText = endedText,
+            durationText = durationText,
+            status = status
+        )
+    }
+
+    private fun resolveAppLabel(packageName: String): String {
+        return try {
+            val appInfo = pm.getApplicationInfo(packageName, 0)
+            pm.getApplicationLabel(appInfo).toString()
+        } catch (e: Exception) {
+            // 取得できない場合はパッケージ名をそのまま表示
+            packageName
+        }
+    }
+
+    private fun formatDateTime(millis: Long): String {
+        val df = SimpleDateFormat("yyyy/MM/dd HH:mm", Locale.getDefault())
+        return df.format(Date(millis))
+    }
+
+    private fun formatDuration(
+        startedAtMillis: Long,
+        endedAtMillis: Long?
+    ): String {
+        val end = endedAtMillis ?: System.currentTimeMillis()
+        val diff = (end - startedAtMillis).coerceAtLeast(0L)
+
+        val totalSeconds = TimeUnit.MILLISECONDS.toSeconds(diff)
+        val minutes = totalSeconds / 60
+        val seconds = totalSeconds % 60
+        val hours = minutes / 60
+        val remMinutes = minutes % 60
+
+        return if (hours > 0) {
+            String.format("%d時間%02d分%02d秒", hours, remMinutes, seconds)
+        } else {
+            String.format("%d分%02d秒", minutes, seconds)
+        }
+    }
+}

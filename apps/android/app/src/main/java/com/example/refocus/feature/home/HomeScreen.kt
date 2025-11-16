@@ -21,6 +21,7 @@ import com.example.refocus.permissions.PermissionHelper
 import com.example.refocus.ui.components.SectionTitle
 import com.example.refocus.ui.components.SectionCard
 import com.example.refocus.ui.components.SettingRow
+import com.example.refocus.feature.history.SessionHistoryScreen
 
 enum class HomeTab {
     Suggestions,
@@ -95,12 +96,7 @@ private fun SuggestionsTab() {
 
 @Composable
 private fun StatsTab() {
-    Box(
-        modifier = Modifier.fillMaxSize(),
-        contentAlignment = Alignment.Center
-    ) {
-        Text("統計・履歴タブ（将来ここにグラフや履歴を実装）")
-    }
+    SessionHistoryScreen()
 }
 
 @Composable
